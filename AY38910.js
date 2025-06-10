@@ -39,6 +39,8 @@ export const AY38910 = function(clockFrequency, samplingRate) {
   const counter = [0, 0, 0];
   let noise_counter = 0;
   let noise_value = 0;
+  let noise_seed = 0xffff;
+  let noise_scaler = 0;
   let env_freq = 0;
   let env_counter = 0;
   let env_direction = false;
@@ -55,10 +57,10 @@ export const AY38910 = function(clockFrequency, samplingRate) {
     if (env_counter < 0) env_counter = 0;
 
     // 1サイクルの16分のいくつか
-    const env_step = parseInt(env_counter * 16 / env_freq); // 15→0
+    const env_step = (env_counter * 16 / env_freq) >> 0; // 15→0
 
     // E3 E2 E1 E0（音量値）の計算
-    if ((env_attack && env_direction) || (!env_attack && !env_direction)) {
+    if (env_attack && env_direction || !env_attack && !env_direction) {
       env_volume = 15 - env_step; // 増加
     } else {
       env_volume = env_step; // 減衰
@@ -81,23 +83,32 @@ export const AY38910 = function(clockFrequency, samplingRate) {
     }
 
     // ノイズ
-    noise_counter -= scale;
-    if (noise_counter < 0) noise_counter = 0;
-    if (noise_counter == 0) {
-      noise_value = Math.random() >= 0.5; // todo: change to fast rnd or real rnd
-      noise_counter = noise_freq;
+    noise_counter += scale;
+    if (noise_counter >= noise_freq) {
+      noise_scaler ^= 1;
+      if (noise_scaler) {
+        if (noise_seed & 1) {
+          noise_seed ^= 0x24000;
+        }
+        noise_seed >>= 1;
+      }
+      if (noise_freq >= scale) {
+        noise_counter -= noise_freq;
+      } else {
+        noise_counter = 0;
+      }
     }
+    noise_value = noise_seed & 1;
 
     // トーン
     for (let ch = 0; ch < 3; ch++) {
       //if (ch_freq[ch] != 0) {
       //if ((ch_freq[ch] != 0) && (tones[ch] == 0)) { // 1.0.1
       if ((ch_freq[ch] != 0) && (ch_freq[ch] != 4096) && (tones[ch] == 0)) { // 1.3.0 4096は究極のPSG演奏システムの「O9C」に対応
-        if (
+        if (counter[ch] % ch_freq[ch] > ch_freq[ch] / 2) {
           //((counter[ch] % ch_freq[ch]) > (ch_freq[ch] / 2)) && (tones[ch] == 0)
           // この「/ 2」が、デューティ比率1:1を表す
-          ((counter[ch] % ch_freq[ch]) > (ch_freq[ch] / 2)) // 1.0.1
-        ) {
+           // 1.0.1
           output[ch] += ch_envelope[ch] ? voltbl[env_volume] : voltbl[ch_volumes[ch]];
         } else {
           output[ch] -= ch_envelope[ch] ? voltbl[env_volume] : voltbl[ch_volumes[ch]];
@@ -116,11 +127,11 @@ export const AY38910 = function(clockFrequency, samplingRate) {
       if (counter[ch] < 0) counter[ch] = ch_freq[ch];
     }
 
-    return ((output[0] + output[1] + output[2]) / 765); // 1〜-1に正規化
+    return (output[0] + output[1] + output[2]) / 765; // 1〜-1に正規化
   };
 
   this.setRegister = (reg, value) => {
-    registers[reg] = value & 255;
+    registers[reg] = value;
     if (reg < 0) {
     } else if (reg <= 5) { // チャンネル周波数
       for (let ch = 0; ch < 3; ch++) {
@@ -150,7 +161,6 @@ export const AY38910 = function(clockFrequency, samplingRate) {
       env_attack = (registers[13] >> 2) & 1;
       env_alternate = (registers[13] >> 1) & 1;
       env_hold = registers[13] & 1;
-
       env_freq = (registers[11] << 8) + (registers[12] << 16);
       env_counter = env_freq;
       env_direction = true;

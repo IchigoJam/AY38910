@@ -7,6 +7,6 @@ export class AY38910Node extends AudioWorkletNode {
     super(context, "AY38910Node-processor");
   }
   writeReg(addr, value) {
-    this.port.postMessage({ addr, value });
+    this.port.postMessage({ addr: addr >> 0, value: value >> 0 });
   }
 };

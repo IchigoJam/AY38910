@@ -8,7 +8,7 @@
 <br>
 <br>
 <button id=btn1>tone test C</button><br>
-<button id=btn2>noise test</button><br>
+<button id=btn2>noise test</button> <select id=sel_noise></select><br>
 <button id=btn3>Play MML</button><input id=inmml value="CDE2CDE2GEDCDED2 GGEGAAG2EEDDC2"><br>
 <hr>
 <a href=https://github.com/IchigoJam/AY38910/>src on GitHub</a><br>
@@ -32,6 +32,12 @@ const tones = [
   53,   50,   47,   44,   42,   40,   37,   35,   33,   31,   29,   28,
   26,   25,   23,   22,   21,   20,   18,   17,   16,   15,   14,   14,
 ];
+
+for (let i = 0; i < 32; i++) {
+  const opt = document.createElement("option");
+  opt.textContent = i;
+  sel_noise.appendChild(opt);
+}
 
 const start = async () => {
   stop();
@@ -70,8 +76,9 @@ const start = async () => {
     psg.writeReg(4, tone); // tone C
     psg.writeReg(5, tone >> 8); // tone C
     psg.writeReg(10, 10); // volume C
-    psg.writeReg(6, 8); // noise
-    await sleep(300);
+    const noisefreq = sel_noise.value;
+    psg.writeReg(6, noisefreq); // noise
+    await sleep(1000);
     psg.writeReg(10, 0);
   };
 
