@@ -4,5 +4,5 @@
 
 ## reference 
 
-- [動画あり】WebアプリケーションでPSGを再現するドライバ | Electronic Information Research Laboratory](https://www.minagi.jp/2020/12/12/psgweb/)
+- [【動画あり】WebアプリケーションでPSGを再現するドライバ | Electronic Information Research Laboratory](https://www.minagi.jp/2020/12/12/psgweb/)
 - [JavaScriptやMMLで気軽に使うファミコン音源(pAPU)](https://fukuno.jig.jp/3830)
