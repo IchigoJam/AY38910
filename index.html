@@ -9,7 +9,7 @@
 <br>
 <button id=btn1>tone test C</button><br>
 <button id=btn2>noise test</button> <select id=sel_noise></select><br>
-<button id=btn3>Play MML</button><input id=inmml value="CDE2CDE2GEDCDED2 GGEGAAG2EEDDC2"><br>
+<button id=btn3>Play MML</button><select id=sel_env></select><input id=inmml value="CDE2CDE2GEDCDED2 GGEGAAG2EEDDC2"><br>
 <hr>
 <a href=https://github.com/IchigoJam/AY38910/>src on GitHub</a><br>
 <a href=https://ichigojam.net/IchigoJam.html>IchigoJam MML</a> by <a href=https://ichigojam.net/>IchigoJam</a><br>
@@ -38,6 +38,25 @@ for (let i = 0; i < 32; i++) {
   opt.textContent = i;
   sel_noise.appendChild(opt);
 }
+
+const env = {
+  "0": 0b0000,
+  "1": 0b0100,
+  "2": 0b1000,
+  "3": 0b1001,
+  "4": 0b1010,
+  "5": 0b1100,
+  "6": 0b1101,
+  "7": 0b1110,
+  "8": 0b1111,
+};
+for (const name in env) {
+  const opt = document.createElement("option");
+  opt.textContent = name;
+  opt.value = env[name];
+  sel_env.appendChild(opt);
+}
+sel_env.value = env["7"];
 
 const start = async () => {
   stop();
@@ -70,7 +89,7 @@ const start = async () => {
     psg.writeReg(8, 0);
   };
   btn2.onclick = async () => {
-    psg.writeReg(7, 0b10001100); // 01_nnn_eee (n:noise off, e:tone off)
+    psg.writeReg(7, 0b10011100); // 01_nnn_eee (n:noise off, e:tone off)
 
     const tone = 0x1AC;
     psg.writeReg(4, tone); // tone C
@@ -84,14 +103,20 @@ const start = async () => {
 
   btn3.onclick = async () => {
     const mml = new MML(inmml.value);
+    const envt = 0x1aa;
+    // envt = (256 * EP) / fc = (256 * EP) / 1.7897725 [MHz]
+    psg.writeReg(11, envt);
+    psg.writeReg(12, envt >> 8);
+    const envp = sel_env.value; // 0b1110
+    psg.writeReg(13, envp);
     for (;;) {
       const p = mml.getFreqLen();
       if (p == null) break;
-      const len = Math.floor(1 / p.freq * 20000);
-      psg.writeReg(8, 10); // volume A
-      setLen(0, len);
+      const len = (1 / p.freq * 20000) >> 0;
+      psg.writeReg(9, 16); // volume B -> envelope
+      setLen(1, len);
       await sleep(p.len);
-      psg.writeReg(8, 0); // volume A
+      psg.writeReg(9, 0); // volume B
     }
   };
 };

@@ -151,8 +151,8 @@ export const AY38910 = function(clockFrequency, samplingRate) {
       }
     } else if (reg <= 10) { // チャンネル音量
       for (let ch = 0; ch < 3; ch++) {
-        ch_volumes[ch] = (registers[ch + 8] & 15);
-        ch_envelope[ch] = (((registers[ch + 8] >> 4) & 1) == 1);
+        ch_volumes[ch] = registers[ch + 8] & 15;
+        ch_envelope[ch] = (registers[ch + 8] >> 4) & 1;
       }
     } else if (reg <= 12) { // エンベロープ周期
       env_freq = (registers[11] << 8) + (registers[12] << 16);
