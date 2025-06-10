@@ -9,14 +9,14 @@
 
 // https://github.com/digital-sound-antiques/emu2149/blob/master/emu2149.h
 // https://github.com/digital-sound-antiques/emu2149/blob/master/emu2149.c
-export const AY38910 = function (clockFrequency, samplingRate) {
+export const AY38910 = function(clockFrequency, samplingRate) {
   const voltbl = [
     // AY-3-8910/8912 PROGRAMMABLE SOUND GENERATOR DATA MANUAL
     0, 2, 3, 4, 6, 8, 11, 16, 23, 32, 45, 64, 90, 128, 180, 255
   ];
   const scale = clockFrequency / 16 / samplingRate; // PSGの時間分解能と実行環境のサンプリングレートの比
 
-  const registers = [0b1010101, 0, 0, 0, 0, 0, 0, 0b10111000, 0, 0, 0, 0b1011, 0, 0];
+  const registers = new Uint8Array([0b1010101, 0, 0, 0, 0, 0, 0, 0b10111000, 0, 0, 0, 0b1011, 0, 0]);
   const ch_freq = [0, 0, 0]; // １周期のクロック数（周波数の逆数）
   let noise_freq = 0;
   const noises = [1, 1, 1];
