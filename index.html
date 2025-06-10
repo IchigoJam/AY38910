@@ -1,0 +1,113 @@
+<!DOCTYPE html><html lang="ja"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width">
+<title>AY-3-8910 Sound Test with AudioWorkletProcessor</title>
+</head><body>
+<h1>AY-3-8910 Sound Test with AudioWorkletProcessor</h1>
+
+<button id=btnstart>START</button>
+<button id=btnstop>STOP</button>
+<br>
+<br>
+<button id=btn1>tone test C</button><br>
+<button id=btn2>noise test</button><br>
+<button id=btn3>Play MML</button><input id=inmml value="CDE2CDE2GEDCDED2 GGEGAAG2EEDDC2"><br>
+<hr>
+<a href=https://github.com/code4fukui/audioworklet-test/>src on GitHub</a><br>
+<a href=https://ichigojam.net/IchigoJam.html>IchigoJam MML</a> by <a href=https://ichigojam.net/>IchigoJam</a><br>
+<a href=https://en.wikipedia.org/wiki/General_Instrument_AY-3-8910>AY-3-8910</a><br>
+
+<script type="module">
+import { sleep } from "https://js.sabae.cc/sleep.js";
+import { MML } from "https://code4fukui.github.io/audioworklet-test/MML.js";
+import { AY38910Node } from "./AY38910Node.js";
+
+let context;
+
+const tones = [
+  3420, 3228, 3047, 2876, 2714, 2562, 2418, 2282, 2154, 2033, 1919, 1811,
+  1710, 1614, 1523, 1438, 1357, 1281, 1209, 1141, 1077, 1016,  959,  905,
+  855,  807,  761,  719,  678,  640,  604,  570,  538,  508,  479,  452,
+  427,  403,  380,  359,  339,  320,  302,  285,  269,  254,  239,  226,
+  213,  201,  190,  179,  169,  160,  151,  142,  134,  127,  119,  113,
+  106,  100,   95,   89,   84,   80,   75,   71,   67,   63,   59,   56,
+  53,   50,   47,   44,   42,   40,   37,   35,   33,   31,   29,   28,
+  26,   25,   23,   22,   21,   20,   18,   17,   16,   15,   14,   14,
+];
+
+const start = async () => {
+  stop();
+  //const sampleRate = 44100;
+  const sampleRate = 48000; // mac default
+  context = new AudioContext({ sampleRate });
+  console.log(context);
+
+  // psg
+  const psg = await AY38910Node.create(context);
+
+  const setLen = (ch, len) => {
+    len = len >> 0;
+    psg.writeReg(ch * 2, len);
+    psg.writeReg(ch * 2 + 1, len >> 8);
+  }
+  const setTone = (ch, tone) => {
+    const freq = tones[tone];
+    psg.setFreq(freq);
+  }
+
+  psg.connect(context.destination);
+  btn1.onclick = async () => {
+    psg.writeReg(8, 10); // volume A
+
+    const tone = 0x1AC;
+    psg.writeReg(0, tone);
+    psg.writeReg(1, tone >> 8);
+    await sleep(300);
+    psg.writeReg(8, 0);
+  };
+  btn2.onclick = async () => {
+    psg.writeReg(7, 0b10001100); // 01_nnn_eee (n:noise off, e:tone off)
+
+    const tone = 0x1AC;
+    psg.writeReg(4, tone); // tone C
+    psg.writeReg(5, tone >> 8); // tone C
+    psg.writeReg(10, 10); // volume C
+    psg.writeReg(6, 8); // noise
+    await sleep(300);
+    psg.writeReg(10, 0);
+  };
+
+  btn3.onclick = async () => {
+    const mml = new MML(inmml.value);
+    for (;;) {
+      const p = mml.getFreqLen();
+      if (p == null) break;
+      const len = Math.floor(1 / p.freq * 20000);
+      psg.writeReg(8, 10); // volume A
+      setLen(0, len);
+      await sleep(p.len);
+      psg.writeReg(8, 0); // volume A
+    }
+  };
+};
+
+const stop = async () => {
+  if (!context) return;
+  await context.close();
+  context = null;
+};
+
+btnstart.onclick = start;
+btnstop.onclick = stop;
+
+</script>
+
+<style>
+body {
+  margin: 1.5em;
+}
+input {
+  width: 50vw;
+}
+a {
+  color: gray !important;
+}
+</style>
