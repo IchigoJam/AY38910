@@ -8,7 +8,11 @@ class AY38910AudioWorklet extends AudioWorkletProcessor {
     this.psg = new AY38910(clock, sampleRate);
 
     this.port.onmessage = e => {
-      this.psg.setRegister(e.data.addr, e.data.value);
+      if (e.data.regs) {
+        this.psg.setRegisters(e.data.regs);
+      } else {
+        this.psg.setRegister(e.data.addr, e.data.value);
+      }
     };
   }
 

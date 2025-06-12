@@ -14,4 +14,7 @@ export class AY38910Node extends AudioWorkletNode {
   writeReg(addr, value) {
     this.port.postMessage({ addr: addr >> 0, value: value >> 0 });
   }
+  writeRegs(regs) { // regs: Uint8Array(14)
+    this.port.postMessage({ regs });
+  }
 };

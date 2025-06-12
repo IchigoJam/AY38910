@@ -16,7 +16,7 @@ export const AY38910 = function(clockFrequency, samplingRate) {
   ];
   const scale = clockFrequency / 16 / samplingRate; // PSGの時間分解能と実行環境のサンプリングレートの比
 
-  const registers = new Uint8Array([0b1010101, 0, 0, 0, 0, 0, 0, 0b10111000, 0, 0, 0, 0b1011, 0, 0]);
+  const registers = new Uint8Array([0b1010101, 0, 0, 0, 0, 0, 0, 0b10111000, 0, 0, 0, 0b1011, 0, 0]); // length == 14
   const ch_freq = [0, 0, 0]; // １周期のクロック数（周波数の逆数）
   let noise_freq = 0;
   const noises = [1, 1, 1];
@@ -164,6 +164,13 @@ export const AY38910 = function(clockFrequency, samplingRate) {
       env_freq = (registers[11] << 8) + (registers[12] << 16);
       env_counter = env_freq;
       env_direction = true;
+    }
+  };
+  this.setRegisters = (regs) => {
+    for (let i = 0; i < regs.length; i++) {
+      if (registers[i] != regs[i]) {
+        this.setRegister(i, regs[i]);
+      }
     }
   };
 };

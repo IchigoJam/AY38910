@@ -10,6 +10,7 @@
 <button id=btn1>tone test C</button><br>
 <button id=btn2>noise test</button> <select id=sel_noise></select><br>
 <button id=btn3>Play MML</button><select id=sel_env></select><input id=inmml value="CDE2CDE2GEDCDED2 GGEGAAG2EEDDC2"><br>
+<button id=btn4>reset</button>
 <hr>
 <a href=https://github.com/IchigoJam/AY38910/>src on GitHub</a><br>
 <a href=https://ichigojam.net/IchigoJam.html>IchigoJam MML</a> by <a href=https://ichigojam.net/>IchigoJam</a><br>
@@ -118,6 +119,10 @@ const start = async () => {
       await sleep(p.len);
       psg.writeReg(9, 0); // volume B
     }
+  };
+  btn4.onclick = async () => {
+    const registers = new Uint8Array([0b1010101, 0, 0, 0, 0, 0, 0, 0b10111000, 0, 0, 0, 0b1011, 0, 0]); // length == 14
+    psg.writeRegs(registers);
   };
 };
 
