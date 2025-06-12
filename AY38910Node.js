@@ -1,6 +1,11 @@
+const BASE_URL = "https://ichigojam.github.io/AY38910";
+
 export class AY38910Node extends AudioWorkletNode {
   static async create(context) {
-    await context.audioWorklet.addModule("./AY38910-processor.js");
+    const base = location.host == "t.xgc.jp" ? "." : BASE_URL;
+    const mpath = base + "/AY38910-processor.js";
+    //console.log(mpath);
+    await context.audioWorklet.addModule(mpath);
     return new AY38910Node(context);
   }
   constructor(context) {
